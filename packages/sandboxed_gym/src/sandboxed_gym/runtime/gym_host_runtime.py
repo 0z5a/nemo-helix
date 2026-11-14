@@ -1161,6 +1161,12 @@ async def _collect_rollout_results(
     capture_dir: str | None = None,
     capture_budget: int = 0,
 ) -> list[dict]:
+    # Newer Gym exposes preprocessing separately from its low-level dispatcher.
+    # It stamps the task/rollout IDs required by legacy environment adapters.
+    # Published Gym 0.5.0 lacks this API, so keep its existing dispatch path.
+    preprocess = getattr(rollout_helper, "preprocess_examples", None)
+    if callable(preprocess):
+        examples = preprocess(examples)
     results: list[dict] = []
     remaining = capture_budget
     for task in rollout_helper.run_examples(examples=examples, head_server_config=head_server_config):
